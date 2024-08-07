@@ -1,11 +1,20 @@
-'use client'
+'use client';
 
-import { useState, useEffect } from 'react'
-import { Box, Stack, Typography, Button, Modal, TextField } from '@mui/material'
-import dynamic from 'next/dynamic'
+import { useState, useEffect } from 'react';
+import { Box, Stack, Typography, Button, Modal, TextField } from '@mui/material';
+import dynamic from 'next/dynamic';
 
-// Dynamically import Firebase Firestore
-const firestorePromise = import('../firebase').then((mod) => mod.firestore)
+// Dynamically import Firebase Firestore functions
+const firestorePromise = import('../firebase').then((mod) => ({
+  firestore: mod.firestore,
+  collection: mod.collection,
+  doc: mod.doc,
+  getDocs: mod.getDocs,
+  query: mod.query,
+  setDoc: mod.setDoc,
+  deleteDoc: mod.deleteDoc,
+  getDoc: mod.getDoc,
+}));
 
 const style = {
   position: 'absolute',
@@ -20,64 +29,59 @@ const style = {
   display: 'flex',
   flexDirection: 'column',
   gap: 3,
-}
+};
 
 export default function Home() {
-  const [inventory, setInventory] = useState([])
-  const [open, setOpen] = useState(false)
-  const [itemName, setItemName] = useState('')
+  const [inventory, setInventory] = useState([]);
+  const [open, setOpen] = useState(false);
+  const [itemName, setItemName] = useState('');
 
-  // Function to fetch inventory data from Firestore
   const updateInventory = async () => {
-    const firestore = await firestorePromise
-    const snapshot = query(collection(firestore, 'inventory'))
-    const docs = await getDocs(snapshot)
-    const inventoryList = []
+    const { firestore, collection, getDocs, query } = await firestorePromise;
+    const snapshot = query(collection(firestore, 'inventory'));
+    const docs = await getDocs(snapshot);
+    const inventoryList = [];
     docs.forEach((doc) => {
-      inventoryList.push({ name: doc.id, ...doc.data() })
-    })
-    setInventory(inventoryList)
-  }
+      inventoryList.push({ name: doc.id, ...doc.data() });
+    });
+    setInventory(inventoryList);
+  };
 
   useEffect(() => {
-    updateInventory()
-  }, [])
+    updateInventory();
+  }, []);
 
-  // Function to handle adding an item
   const addItem = async (item) => {
-    const firestore = await firestorePromise
-    const docRef = doc(collection(firestore, 'inventory'), item)
-    const docSnap = await getDoc(docRef)
+    const { firestore, collection, doc, getDoc, setDoc } = await firestorePromise;
+    const docRef = doc(collection(firestore, 'inventory'), item);
+    const docSnap = await getDoc(docRef);
     if (docSnap.exists()) {
-      const { quantity } = docSnap.data()
-      await setDoc(docRef, { quantity: quantity + 1 })
+      const { quantity } = docSnap.data();
+      await setDoc(docRef, { quantity: quantity + 1 });
     } else {
-      await setDoc(docRef, { quantity: 1 })
+      await setDoc(docRef, { quantity: 1 });
     }
-    await updateInventory()
-  }
+    await updateInventory();
+  };
 
-  // Function to handle removing an item
   const removeItem = async (item) => {
-    const firestore = await firestorePromise
-    const docRef = doc(collection(firestore, 'inventory'), item)
-    const docSnap = await getDoc(docRef)
+    const { firestore, collection, doc, getDoc, deleteDoc, setDoc } = await firestorePromise;
+    const docRef = doc(collection(firestore, 'inventory'), item);
+    const docSnap = await getDoc(docRef);
     if (docSnap.exists()) {
-      const { quantity } = docSnap.data()
+      const { quantity } = docSnap.data();
       if (quantity === 1) {
-        await deleteDoc(docRef)
+        await deleteDoc(docRef);
       } else {
-        await setDoc(docRef, { quantity: quantity - 1 })
+        await setDoc(docRef, { quantity: quantity - 1 });
       }
     }
-    await updateInventory()
-  }
+    await updateInventory();
+  };
 
-  // Functions to handle modal state
-  const handleOpen = () => setOpen(true)
-  const handleClose = () => setOpen(false)
+  const handleOpen = () => setOpen(true);
+  const handleClose = () => setOpen(false);
 
-  // UI Implementation for Inventory Management App
   return (
     <Box
       width="100vw"
@@ -110,9 +114,9 @@ export default function Home() {
             <Button
               variant="outlined"
               onClick={() => {
-                addItem(itemName)
-                setItemName('')
-                handleClose()
+                addItem(itemName);
+                setItemName('');
+                handleClose();
               }}
             >
               Add
@@ -162,5 +166,5 @@ export default function Home() {
         </Stack>
       </Box>
     </Box>
-  )
+  );
 }
