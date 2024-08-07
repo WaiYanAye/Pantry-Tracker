@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { Box, Stack, Typography, Button, Modal, TextField } from '@mui/material';
 import dynamic from 'next/dynamic';
 
-// Dynamically import Firebase Firestore functions
+// Dynamic import of Firebase Firestore
 const firestorePromise = import('../firebase').then((mod) => ({
   firestore: mod.firestore,
   collection: mod.collection,
